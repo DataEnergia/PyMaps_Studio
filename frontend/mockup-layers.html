@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=400, initial-scale=1.0">
+<title>PYMAPS — Mockup UX Refactor: Camadas</title>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    font-size: 13px;
+    line-height: 1.5;
+    display: flex;
+    gap: 16px;
+    padding: 24px;
+    min-height: 100vh;
+    overflow-x: auto;
+  }
+
+  /* ── CSS Variables (same as app) ── */
+  :root {
+    --surface: #161b22;
+    --surface-strong: #1c2333;
+    --surface-muted: #0d1117;
+    --border: #30363d;
+    --border-strong: #484f58;
+    --accent: #d9822b;
+    --accent-soft: rgba(217,130,43,0.15);
+    --accent-strong: #f0983a;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --text-subtle: #6e7681;
+    --success: #3fb950;
+    --danger: #f85149;
+    --panel-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .mockup-card {
+    flex-shrink: 0;
+    width: 340px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--panel-shadow);
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 48px);
+  }
+
+  .mockup-card .card-header {
+    padding: 10px 16px 8px;
+    background: var(--surface-strong);
+    border-bottom: 1px solid var(--border);
+  }
+  .mockup-card .card-header h2 {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-subtle);
+    margin-bottom: 4px;
+  }
+  .mockup-card .card-header h3 {
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  /* ── Map selector ── */
+  .map-selector {
+    padding: 10px 16px 8px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-strong);
+  }
+  .map-selector-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-subtle);
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .map-selector-label span {
+    font-size: 10px;
+    color: var(--text-subtle);
+  }
+  .map-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .map-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .map-pill.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .map-pill:hover:not(.active) {
+    border-color: var(--border-strong);
+    color: var(--text);
+  }
+  .map-pill .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text-subtle);
+  }
+  .map-pill.active .dot { background: var(--accent); }
+  .map-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .map-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .map-action:hover { border-color: var(--border-strong); color: var(--text); }
+  .map-action svg { width: 11px; height: 11px; }
+
+  /* ── Tabs ── */
+  .tab-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-strong);
+  }
+  .tab-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 7px 8px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-subtle);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .tab-btn:hover:not(.active) {
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--text);
+  }
+  .tab-btn.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .tab-btn svg { width: 13px; height: 13px; }
+
+  /* ── Tab 3: Visual (small) ── */
+  .tab-bar-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  /* ── Content scroll area ── */
+  .tab-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+  }
+  .tab-content::-webkit-scrollbar { width: 4px; }
+  .tab-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ── Section groups ── */
+  .section-group {
+    margin-bottom: 16px;
+  }
+  .section-group-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text-subtle);
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .section-group-title svg { width: 12px; height: 12px; }
+
+  /* ── Layer card ── */
+  .layer-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    background: var(--surface-strong);
+    transition: border-color 0.15s;
+  }
+  .layer-card.has-data {
+    border-color: var(--accent);
+  }
+  .layer-card.expanded {
+    border-color: var(--accent);
+  }
+  .layer-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .layer-header:hover { background: var(--surface-muted); }
+  .layer-card.has-data .layer-header,
+  .layer-card.expanded .layer-header {
+    background: var(--accent-soft);
+  }
+  .layer-chevron {
+    width: 12px; height: 12px;
+    color: var(--text-subtle);
+    flex-shrink: 0;
+    transition: transform 0.15s;
+  }
+  .layer-card.expanded .layer-chevron { transform: rotate(90deg); }
+  .layer-icon {
+    width: 24px; height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 12px;
+    background: var(--surface-muted);
+    border: 1px solid var(--border);
+  }
+  .layer-icon svg { width: 14px; height: 14px; }
+  .layer-info { flex: 1; min-width: 0; }
+  .layer-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .layer-card.expanded .layer-name,
+  .layer-card.has-data .layer-name { color: var(--accent); }
+  .layer-sub {
+    font-size: 10px;
+    color: var(--text-subtle);
+  }
+  .layer-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .layer-action-btn {
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: var(--text-subtle);
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .layer-action-btn:hover { background: var(--surface-muted); color: var(--text); }
+  .layer-action-btn.eye-off { color: var(--text-subtle); opacity: 0.5; }
+  .layer-action-btn.delete:hover { background: rgba(248,81,73,0.1); color: var(--danger); }
+  .layer-action-btn svg { width: 13px; height: 13px; }
+
+  .layer-body {
+    padding: 8px 12px 12px;
+    border-top: 1px solid var(--border);
+  }
+  .layer-body.hidden { display: none; }
+
+  /* ── Breadcrumb ── */
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 16px 6px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-strong);
+  }
+  .breadcrumb-seg {
+    font-size: 10px;
+    color: var(--text-subtle);
+    cursor: pointer;
+    transition: color 0.1s;
+  }
+  .breadcrumb-seg:hover { color: var(--text); }
+  .breadcrumb-seg.active { color: var(--accent); font-weight: 600; }
+  .breadcrumb-sep {
+    font-size: 10px;
+    color: var(--text-subtle);
+    opacity: 0.4;
+  }
+
+  /* ── Form fields ── */
+  .field { margin-bottom: 10px; }
+  .field-label {
+    font-size: 11px;
+    color: var(--text-subtle);
+    font-weight: 500;
+    margin-bottom: 4px;
+    display: block;
+  }
+  .field-label.muted {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-subtle);
+    font-weight: 600;
+  }
+  select, .input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 10px;
+    color: var(--text);
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  select:focus, .input:focus { border-color: var(--accent); }
+  .input::placeholder { color: var(--text-subtle); }
+
+  .field-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  /* ── Toggle ── */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+  }
+  .toggle-row label {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .toggle {
+    position: relative;
+    width: 32px; height: 18px;
+    background: var(--surface-muted);
+    border-radius: 9px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--accent); }
+  .toggle .knob {
+    position: absolute;
+    top: 2px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    transition: left 0.15s;
+  }
+  .toggle .knob { left: 2px; }
+  .toggle.on .knob { left: 16px; }
+
+  /* ── Button styles ── */
+  .btn-primary {
+    width: 100%;
+    padding: 8px 14px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.15s;
+  }
+  .btn-primary:hover { background: var(--accent-strong); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary svg { width: 14px; height: 14px; }
+
+  .btn-ghost {
+    width: 100%;
+    padding: 6px 12px;
+    background: var(--surface);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: all 0.15s;
+  }
+  .btn-ghost:hover { border-color: var(--border-strong); color: var(--text); }
+  .btn-ghost svg { width: 12px; height: 12px; }
+
+  /* ── Stepper ── */
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+  .step-circle {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    color: var(--text-subtle);
+    transition: all 0.2s;
+  }
+  .step.active .step-circle {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .step.done .step-circle {
+    background: var(--success);
+    border-color: var(--success);
+    color: #fff;
+  }
+  .step-label {
+    font-size: 9px;
+    color: var(--text-subtle);
+    margin-top: 4px;
+    text-align: center;
+  }
+  .step.active .step-label { color: var(--accent); font-weight: 600; }
+  .step.done .step-label { color: var(--success); }
+  .step-line {
+    position: absolute;
+    top: 11px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--border);
+    z-index: 0;
+  }
+  .step:last-child .step-line { display: none; }
+  .step.done .step-line { background: var(--success); }
+
+  /* ── Drop zone ── */
+  .dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 20px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--surface-muted);
+  }
+  .dropzone:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .dropzone svg {
+    width: 28px; height: 28px;
+    color: var(--text-subtle);
+    margin: 0 auto 8px;
+    display: block;
+  }
+  .dropzone-title {
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .dropzone-hint {
+    font-size: 10px;
+    color: var(--text-subtle);
+  }
+
+  /* ── Color palette row ── */
+  .color-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface-muted);
+    margin-bottom: 6px;
+  }
+  .color-row-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .color-row-sub {
+    font-size: 9px;
+    color: var(--text-subtle);
+  }
+  .color-swatch {
+    width: 24px; height: 24px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+  }
+
+  /* ── Palette grid ── */
+  .palette-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .palette-swatch {
+    width: 100%; aspect-ratio: 1;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .palette-swatch.active { border-color: var(--accent); }
+  .palette-swatch:hover { border-color: var(--border-strong); }
+
+  /* ── Range slider ── */
+  input[type="range"] {
+    width: 100%;
+    height: 6px;
+    background: var(--surface-muted);
+    border-radius: 3px;
+    -webkit-appearance: none;
+    appearance: none;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+
+  /* ── Badge ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 600;
+  }
+  .badge-accent { background: var(--accent-soft); color: var(--accent); }
+  .badge-success { background: rgba(63,185,80,0.15); color: var(--success); }
+  .badge-muted { background: var(--surface-muted); color: var(--text-muted); border: 1px solid var(--border); }
+
+  /* ── Add layer menu ── */
+  .add-layer-menu {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 0; right: 0;
+    background: var(--surface-strong);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 -8px 24px rgba(0,0,0,0.3);
+    overflow: hidden;
+    z-index: 50;
+    margin-bottom: 6px;
+  }
+  .add-layer-menu.open { display: block; }
+  .add-layer-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.1s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-size: 12px;
+  }
+  .add-layer-option:hover { background: var(--accent-soft); color: var(--accent); }
+  .add-layer-option svg { width: 16px; height: 16px; }
+  .add-layer-option .alo-desc {
+    font-size: 10px;
+    color: var(--text-subtle);
+    margin-top: 1px;
+  }
+
+  /* ── Info callout ── */
+  .callout {
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .callout strong { color: var(--text); }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 32px 16px;
+  }
+  .empty-icon {
+    width: 48px; height: 48px;
+    margin: 0 auto 12px;
+    border-radius: 12px;
+    border: 2px dashed var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-subtle);
+    opacity: 0.6;
+  }
+  .empty-icon svg { width: 24px; height: 24px; }
+  .empty-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .empty-desc {
+    font-size: 11px;
+    color: var(--text-subtle);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  /* ── Comparison label ── */
+  .comparison-label {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 3px 12px;
+    border-radius: 4px;
+    z-index: 10;
+  }
+
+  .mockup-wrapper {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  /* ── Connected sub-layers ── */
+  .sub-layer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    margin-bottom: 4px;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .sub-layer:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .sub-layer-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .sub-layer-name {
+    flex: 1;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .sub-layer-count {
+    font-size: 10px;
+    color: var(--text-subtle);
+  }
+  .sub-layer-btns {
+    display: flex;
+    gap: 2px;
+  }
+  .sub-layer-btns button {
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    border: none; background: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text-subtle);
+    transition: all 0.1s;
+  }
+  .sub-layer-btns button:hover { background: var(--surface-muted); color: var(--text); }
+  .sub-layer-btns button svg { width: 11px; height: 11px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MOCKUP 1: NOVA PROPOSTA — Aba "Camadas" com dados+estilo integrado
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="mockup-wrapper">
+  <div class="comparison-label">NOVA PROPOSTA</div>
+  <div class="mockup-card" id="newMockup">
+
+    <!-- Map selector -->
+    <div class="map-selector">
+      <div class="map-selector-label">
+        <span>MAPAS NO CANVAS</span>
+        <span>2</span>
+      </div>
+      <div class="map-pills">
+        <div class="map-pill active" onclick="selectMap(this)">
+          <div class="dot"></div>
+          Mapa 1 — Brasil
+        </div>
+        <div class="map-pill" onclick="selectMap(this)">
+          <div class="dot"></div>
+          Mapa 2
+        </div>
+      </div>
+      <div class="map-actions">
+        <button class="map-action">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Novo
+        </button>
+        <button class="map-action">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Duplicar
+        </button>
+        <button class="map-action">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+          Remover
+        </button>
+      </div>
+    </div>
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <span class="breadcrumb-seg active">Mapa 1</span>
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-seg" style="color:var(--text-subtle)">Camadas</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-bar tab-bar-3" id="newTabBar">
+      <button class="tab-btn" data-tab="map" onclick="switchNewTab('map')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        Mapa
+      </button>
+      <button class="tab-btn active" data-tab="layers" onclick="switchNewTab('layers')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        Camadas
+      </button>
+      <button class="tab-btn" data-tab="visual" onclick="switchNewTab('visual')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="2.5"/><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        Visual
+      </button>
+    </div>
+
+    <!-- Tab Content: Map -->
+    <div class="tab-content" id="newTabMap" style="display:none">
+      <div class="section-group">
+        <div class="section-group-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Área do mapa
+        </div>
+
+        <div class="field">
+          <label class="field-label">País</label>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12px;color:var(--text)">Brasil</div>
+        </div>
+        <div class="field">
+          <label class="field-label">Região</label>
+          <select><option value="">Todas as regiões</option><option>Norte</option><option>Nordeste</option><option>Sudeste</option><option>Sul</option><option>Centro-Oeste</option></select>
+        </div>
+        <div class="field">
+          <label class="field-label">Estado (UF)</label>
+          <select><option value="">Todos os estados</option></select>
+        </div>
+        <div class="field">
+          <label class="field-label">Município</label>
+          <select><option value="">Todos os municípios</option></select>
+        </div>
+      </div>
+
+      <div class="section-group">
+        <div class="section-group-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Mapa base
+        </div>
+        <div class="field">
+          <select>
+            <option>Sem mapa base</option>
+            <option>Ruas (OSM)</option>
+            <option>Relevo</option>
+            <option>Satélite</option>
+            <option>Escuro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="callout">
+        As edições de área e visual global afetam apenas <strong>Mapa 1</strong>.
+      </div>
+    </div>
+
+    <!-- Tab Content: Layers (MAIN PROPOSAL) -->
+    <div class="tab-content" id="newTabLayers">
+
+      <!-- Choropleth layer — EXPANDED with stepper -->
+      <div class="layer-card has-data expanded" id="newChoropleth">
+        <div class="layer-header" onclick="toggleLayer('newChoropleth')">
+          <svg class="layer-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <div class="layer-icon" style="background:rgba(217,130,43,0.15);color:#d9822b;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 2a9 9 0 0 0 0 18"/><path d="M13 2a9 9 0 0 1 0 18"/></svg>
+          </div>
+          <div class="layer-info">
+            <div class="layer-name">Coroplético</div>
+            <div class="layer-sub">184 reg · Municípios <span class="badge badge-success">✓</span></div>
+          </div>
+          <div class="layer-actions">
+            <button class="layer-action-btn" title="Visível">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <button class="layer-action-btn delete" title="Remover">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="layer-body" id="newChoroplethBody">
+          <!-- Stepper -->
+          <div class="stepper">
+            <div class="step done">
+              <div class="step-circle">✓</div>
+              <div class="step-label">Upload</div>
+              <div class="step-line" style="background:var(--success)"></div>
+            </div>
+            <div class="step done">
+              <div class="step-circle">✓</div>
+              <div class="step-label">Colunas</div>
+              <div class="step-line" style="background:var(--success)"></div>
+            </div>
+            <div class="step active">
+              <div class="step-circle">3</div>
+              <div class="step-label">Visual</div>
+            </div>
+          </div>
+
+          <!-- Data summary (compact) -->
+          <div style="background:var(--surface-muted);border:1px solid var(--border);border-radius:6px;padding:6px 10px;margin-bottom:10px;font-size:11px;color:var(--text-muted)">
+            Área: <strong style="color:var(--text)">cod_ibge</strong> · Valor: <strong style="color:var(--text)">populacao</strong>
+            <span class="badge badge-muted" style="margin-left:4px">CSV</span>
+            <button style="float:right;background:none;border:none;color:var(--text-subtle);cursor:pointer;font-size:10px;">Substituir</button>
+          </div>
+
+          <!-- Style section integrated -->
+          <div class="section-group-title" style="margin-top:8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            Paleta de cores
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;">
+            <button style="display:flex;align-items:center;gap:8px;border:1.5px solid var(--accent);background:var(--accent-soft);border-radius:6px;padding:6px 10px;cursor:pointer;">
+              <div style="display:flex;gap:2px;">
+                <div style="width:16px;height:16px;border-radius:2px;background:#0b3146"></div>
+                <div style="width:16px;height:16px;border-radius:2px;background:#335a7a"></div>
+                <div style="width:16px;height:16px;border-radius:2px;background:#5a95c3"></div>
+                <div style="width:16px;height:16px;border-radius:2px;background:#b1bcc5"></div>
+                <div style="width:16px;height:16px;border-radius:2px;background:#c4ccd3"></div>
+              </div>
+              <span style="font-size:11px;font-weight:600;color:var(--accent)">Azul</span>
+            </button>
+            <button style="display:flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--surface);border-radius:6px;padding:6px 10px;cursor:pointer;">
+              <div style="display:flex;gap:2px;">
+                <div style="width:16px;height:16px;border-radius:2px;background:#8f6b2a"></div>
+                <div style="width:16px;height:16px;border-radius:2px;background:#c27a2b"></div>
+                <div style="width:16px;height:16px;border-radius:2px;background:#d9822b"></div>
+                <div style="width:16px;height:16px;border-radius:2px;background:#e09a3a"></div>
+                <div style="width:16px;height:16px;border-radius:2px;background:#f0c060"></div>
+              </div>
+              <span style="font-size:11px;font-weight:600;color:var(--text)">Laranja</span>
+            </button>
+          </div>
+
+          <div class="field-grid-2">
+            <div class="field">
+              <label class="field-label muted">Faixas</label>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;">
+                <button style="padding:5px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);font-size:11px;font-weight:600;cursor:pointer">3</button>
+                <button style="padding:5px;border:1px solid var(--accent);border-radius:4px;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:600;cursor:pointer">5</button>
+                <button style="padding:5px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);font-size:11px;font-weight:600;cursor:pointer">7</button>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label muted">Unidade</label>
+              <input type="text" class="input" placeholder="Ex: hab, MW" value="hab">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Points layer — EXPANDED with sub-layers -->
+      <div class="layer-card has-data" id="newPoints">
+        <div class="layer-header" onclick="toggleLayer('newPoints')">
+          <svg class="layer-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <div class="layer-icon" style="background:rgba(63,185,80,0.15);color:var(--success);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div class="layer-info">
+            <div class="layer-name">Pontos</div>
+            <div class="layer-sub">2 camadas · 847 pontos</div>
+          </div>
+          <div class="layer-actions">
+            <button class="layer-action-btn" title="Visível">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <button class="layer-action-btn delete" title="Limpar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="layer-body" id="newPointsBody" style="display:none">
+          <!-- Sub-layer: Usinas -->
+          <div class="sub-layer" onclick="toggleLayer('usinasDetail')">
+            <div class="sub-layer-dot" style="background:#d9822b"></div>
+            <div class="sub-layer-name">Usinas</div>
+            <div class="sub-layer-count">623 pts</div>
+            <div class="sub-layer-btns">
+              <button title="Visível"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <button title="Remover" style="color:var(--text-subtle)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+          </div>
+          <div id="usinasDetail" style="display:none;padding:8px 0 0 18px;border-left:2px solid var(--accent);margin-left:5px;margin-bottom:8px;">
+            <div class="field-grid-2" style="margin-bottom:6px;">
+              <div class="field">
+                <label class="field-label muted">Cor</label>
+                <input type="color" value="#d9822b" style="width:100%;height:28px;border-radius:4px;border:1px solid var(--border);cursor:pointer;padding:1px;">
+              </div>
+              <div class="field">
+                <label class="field-label muted">Tamanho</label>
+                <input type="number" value="6" min="2" max="30" class="input" style="padding:4px 8px;">
+              </div>
+            </div>
+            <div class="toggle-row">
+              <label>Mostrar na legenda</label>
+              <button class="toggle on" onclick="this.classList.toggle('on')"><div class="knob"></div></button>
+            </div>
+          </div>
+
+          <!-- Sub-layer: Postos -->
+          <div class="sub-layer">
+            <div class="sub-layer-dot" style="background:#3fb950"></div>
+            <div class="sub-layer-name">Postos de Saúde</div>
+            <div class="sub-layer-count">224 pts</div>
+            <div class="sub-layer-btns">
+              <button title="Visível"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <button title="Remover" style="color:var(--text-subtle)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+          </div>
+
+          <!-- Add more -->
+          <div class="dropzone" style="padding:10px;margin-top:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="display:inline;vertical-align:middle;margin-right:4px;color:var(--text-subtle)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span style="font-size:11px;color:var(--text-subtle)">Adicionar outra camada de pontos</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- GeoJSON layer — collapsed -->
+      <div class="layer-card has-data" id="newGeoJson">
+        <div class="layer-header" onclick="toggleLayer('newGeoJson')">
+          <svg class="layer-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <div class="layer-icon" style="background:rgba(100,149,237,0.15);color:#6495ED;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+          </div>
+          <div class="layer-info">
+            <div class="layer-name">GeoJSON</div>
+            <div class="layer-sub">1 camada · 458 feat · Polígonos</div>
+          </div>
+          <div class="layer-actions">
+            <button class="layer-action-btn" title="Visível">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <button class="layer-action-btn delete" title="Remover">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="layer-body" id="newGeoJsonBody" style="display:none">
+          <!-- Sub-layer for single geojson -->
+          <div class="sub-layer" onclick="toggleLayer('geojsonDetail')">
+            <div class="sub-layer-dot" style="background:#6495ED"></div>
+            <div class="sub-layer-name">Rodovias Federais</div>
+            <div class="sub-layer-count">458 feat</div>
+            <div class="sub-layer-btns">
+              <button title="Visível"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <button title="Remover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+          </div>
+          <div id="geojsonDetail" style="display:none;padding:8px 0 0 18px;border-left:2px solid #6495ED;margin-left:5px;margin-bottom:8px;">
+            <div class="field-grid-2" style="margin-bottom:6px;">
+              <div class="field">
+                <label class="field-label muted">Cor</label>
+                <input type="color" value="#6495ED" style="width:100%;height:28px;border-radius:4px;border:1px solid var(--border);cursor:pointer;padding:1px;">
+              </div>
+              <div class="field">
+                <label class="field-label muted">Opacidade</label>
+                <input type="range" min="5" max="100" value="85" style="width:100%">
+              </div>
+            </div>
+            <div class="field-grid-2">
+              <div class="field">
+                <label class="field-label muted">Espessura</label>
+                <input type="number" value="1.5" min="0.5" max="10" step="0.5" class="input" style="padding:4px 8px;">
+              </div>
+              <div class="field">
+                <label class="field-label muted">Rótulo</label>
+                <select class="input" style="padding:4px 8px;"><option>Sem rótulo</option></select>
+              </div>
+            </div>
+            <div class="toggle-row" style="margin-top:4px;">
+              <label>Mostrar na legenda</label>
+              <button class="toggle on" onclick="this.classList.toggle('on')"><div class="knob"></div></button>
+            </div>
+          </div>
+
+          <div class="dropzone" style="padding:10px;margin-top:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="display:inline;vertical-align:middle;margin-right:4px;color:var(--text-subtle)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span style="font-size:11px;color:var(--text-subtle)">Adicionar outro .geojson</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add layer button -->
+      <div style="position:relative" id="addLayerContainer">
+        <div class="add-layer-menu" id="addLayerMenu">
+          <button class="add-layer-option" onclick="showStepperState()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <div>
+              <div style="font-weight:600;color:var(--text)">Coroplético</div>
+              <div class="alo-desc">Pintar regiões com dados numéricos</div>
+            </div>
+          </button>
+          <button class="add-layer-option" onclick="addPointsLayer()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <div>
+              <div style="font-weight:600;color:var(--text)">Pontos</div>
+              <div class="alo-desc">CSV com latitude e longitude</div>
+            </div>
+          </button>
+          <button class="add-layer-option" onclick="addGeoJsonLayer()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+            <div>
+              <div style="font-weight:600;color:var(--text)">GeoJSON</div>
+              <div class="alo-desc">Sobreposição vetorial</div>
+            </div>
+          </button>
+        </div>
+        <button class="btn-ghost" onclick="toggleAddMenu()" id="addLayerBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Adicionar camada
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab Content: Visual -->
+    <div class="tab-content" id="newTabVisual" style="display:none">
+      <div class="section-group">
+        <div class="section-group-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v18"/><path d="M18 3v18"/><path d="M6 12h12"/></svg>
+          Bordas
+        </div>
+        <div class="toggle-row">
+          <label>Bordas internas</label>
+          <button class="toggle on" onclick="this.classList.toggle('on')"><div class="knob"></div></button>
+        </div>
+        <div class="toggle-row">
+          <label>Contorno externo</label>
+          <button class="toggle" onclick="this.classList.toggle('on')"><div class="knob"></div></button>
+        </div>
+      </div>
+
+      <div class="section-group">
+        <div class="section-group-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Legenda
+        </div>
+        <div class="toggle-row">
+          <label>Mostrar legenda</label>
+          <button class="toggle on" onclick="this.classList.toggle('on')"><div class="knob"></div></button>
+        </div>
+        <div class="field" style="margin-top:8px;">
+          <label class="field-label">Escala da legenda</label>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input type="range" min="50" max="300" value="100" style="flex:1">
+            <span style="font-size:11px;color:var(--text-subtle);font-family:monospace;min-width:32px;text-align:right">100%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-group">
+        <div class="section-group-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+          Siglas dos estados
+        </div>
+        <div class="toggle-row">
+          <label>Mostrar siglas</label>
+          <button class="toggle on" onclick="this.classList.toggle('on')"><div class="knob"></div></button>
+        </div>
+        <div class="field">
+          <label class="field-label">Tamanho</label>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input type="range" min="8" max="32" value="12" style="flex:1">
+            <span style="font-size:11px;color:var(--text-subtle);font-family:monospace;min-width:28px;text-align:right">12px</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">Cor das siglas</label>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input type="color" value="#ffffff" style="width:28px;height:28px;border:1px solid var(--border);border-radius:4px;cursor:pointer;padding:1px;">
+            <input type="text" class="input" value="#ffffff" style="font-family:monospace;font-size:11px;padding:4px 8px;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MOCKUP 2: NOVA PROPOSTA — Estado vazio (sem camadas)
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="mockup-wrapper">
+  <div class="comparison-label" style="background:var(--accent)">EMPTY STATE</div>
+  <div class="mockup-card">
+    <!-- Map selector -->
+    <div class="map-selector">
+      <div class="map-selector-label">
+        <span>MAPAS NO CANVAS</span>
+        <span>1</span>
+      </div>
+      <div class="map-pills">
+        <div class="map-pill active">
+          <div class="dot"></div>
+          Mapa 1 — Brasil
+        </div>
+      </div>
+      <div class="map-actions">
+        <button class="map-action">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Novo
+        </button>
+        <button class="map-action" style="opacity:0.4">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Duplicar
+        </button>
+        <button class="map-action" style="opacity:0.4">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg>
+          Remover
+        </button>
+      </div>
+    </div>
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <span class="breadcrumb-seg active">Mapa 1</span>
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-seg" style="color:var(--text-subtle)">Camadas</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-bar tab-bar-3">
+      <button class="tab-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        Mapa
+      </button>
+      <button class="tab-btn active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        Camadas
+      </button>
+      <button class="tab-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="2.5"/><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/></svg>
+        Visual
+      </button>
+    </div>
+
+    <!-- Empty state -->
+    <div class="tab-content" style="display:flex; flex-direction:column;">
+      <div class="empty-state" style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        </div>
+        <div class="empty-title">Nenhuma camada nesse mapa</div>
+        <div class="empty-desc">
+          Adicione dados para pintar regiões (coroplético),<br>
+          marcar pontos ou sobrepor shapes do GeoJSON.
+        </div>
+
+        <button class="btn-primary" style="margin-bottom:8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Coroplético
+        </button>
+        <button class="btn-ghost" style="margin-bottom:8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Pontos (CSV)
+        </button>
+        <button class="btn-ghost">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
+          GeoJSON
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MOCKUP 3: NOVA PROPOSTA — Coroplético em estado de stepper (Upload)
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="mockup-wrapper">
+  <div class="comparison-label" style="background:#3fb950">STEPPER ATIVO</div>
+  <div class="mockup-card">
+    <!-- Map selector -->
+    <div class="map-selector">
+      <div class="map-selector-label">
+        <span>MAPAS NO CANVAS</span>
+        <span>1</span>
+      </div>
+      <div class="map-pills">
+        <div class="map-pill active">
+          <div class="dot"></div>
+          Mapa 1 — Brasil
+        </div>
+      </div>
+    </div>
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <span class="breadcrumb-seg">Mapa 1</span>
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-seg active">Coroplético</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-bar tab-bar-3">
+      <button class="tab-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        Mapa
+      </button>
+      <button class="tab-btn active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        Camadas
+      </button>
+      <button class="tab-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="2.5"/><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/></svg>
+        Visual
+      </button>
+    </div>
+
+    <div class="tab-content">
+      <!-- Choropleth layer — STEPPER STATE: Step 1 -->
+      <div class="layer-card expanded" id="stepperChoropleth" style="border-color:var(--accent);">
+        <div class="layer-header" onclick="toggleLayer('stepperChoropleth')" style="background:var(--accent-soft)">
+          <svg class="layer-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <div class="layer-icon" style="background:rgba(217,130,43,0.15);color:#d9822b;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </div>
+          <div class="layer-info">
+            <div class="layer-name" style="color:var(--accent)">Coroplético</div>
+            <div class="layer-sub">Configurando...</div>
+          </div>
+          <div class="layer-actions">
+            <button class="layer-action-btn delete" title="Cancelar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="layer-body" id="stepperChoroplethBody">
+          <!-- Stepper: step 1 active -->
+          <div class="stepper" id="stepper1">
+            <div class="step active">
+              <div class="step-circle">1</div>
+              <div class="step-label">Upload</div>
+              <div class="step-line"></div>
+            </div>
+            <div class="step">
+              <div class="step-circle">2</div>
+              <div class="step-label">Colunas</div>
+              <div class="step-line"></div>
+            </div>
+            <div class="step">
+              <div class="step-circle">3</div>
+              <div class="step-label">Aplicar</div>
+            </div>
+          </div>
+
+          <div class="dropzone" onclick="advanceStepper()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <div class="dropzone-title">Arraste ou clique para upload</div>
+            <div class="dropzone-hint">CSV, Excel ou GeoJSON</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Points layer — collapsed -->
+      <div class="layer-card" id="stepperPoints" style="margin-top:8px;">
+        <div class="layer-header" onclick="toggleLayer('stepperPoints')">
+          <svg class="layer-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <div class="layer-icon" style="background:var(--surface-muted);color:var(--text-subtle);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div class="layer-info">
+            <div class="layer-name">Pontos</div>
+            <div class="layer-sub">Lat / Lon · Adicionar</div>
+          </div>
+          <div class="layer-actions" style="opacity:0">
+            <button class="layer-action-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="layer-body" id="stepperPointsBody" style="display:none"></div>
+      </div>
+
+      <!-- GeoJSON layer — collapsed -->
+      <div class="layer-card" id="stepperGeoJson" style="margin-top:8px;">
+        <div class="layer-header" onclick="toggleLayer('stepperGeoJson')">
+          <svg class="layer-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <div class="layer-icon" style="background:var(--surface-muted);color:var(--text-subtle);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+          </div>
+          <div class="layer-info">
+            <div class="layer-name">GeoJSON</div>
+            <div class="layer-sub">Sobreposição vetorial</div>
+          </div>
+          <div class="layer-actions" style="opacity:0">
+            <button class="layer-action-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="layer-body" id="stepperGeoJsonBody" style="display:none"></div>
+      </div>
+
+      <!-- Add layer button -->
+      <button class="btn-ghost" style="margin-top:8px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Adicionar camada
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MOCKUP 4: ATUAL (antes) — para comparação
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="mockup-wrapper">
+  <div class="comparison-label" style="background:var(--text-subtle);color:var(--surface)">ATUAL (antes)</div>
+  <div class="mockup-card">
+    <!-- Tabs — old 3-tab design -->
+    <div class="map-selector" style="border-bottom:none;">
+      <div class="map-selector-label">
+        <span>MAPAS NO CANVAS</span>
+        <span>2</span>
+      </div>
+      <div class="map-pills">
+        <div class="map-pill active">
+          <div class="dot"></div>
+          Mapa 1
+        </div>
+        <div class="map-pill">
+          <div class="dot"></div>
+          Mapa 2
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-bar" style="grid-template-columns:1fr 1fr 1fr;">
+      <button class="tab-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        Área
+      </button>
+      <button class="tab-btn active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4.03 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/></svg>
+        Dados
+      </button>
+      <button class="tab-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="2.5"/><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/></svg>
+        Estilo
+      </button>
+    </div>
+
+    <div class="tab-content">
+      <div style="margin-bottom:8px">
+        <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.16em;color:var(--text-subtle)">Camadas</p>
+        <h3 style="font-size:14px;font-weight:600;color:var(--text);margin-top:2px">Mapa 1</h3>
+      </div>
+
+      <!-- OLD: Choropleth -->
+      <div class="layer-card has-data" style="margin-bottom:8px;border-color:var(--accent)">
+        <div class="layer-header" style="background:var(--accent-soft)">
+          <svg class="layer-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <div class="layer-info">
+            <div class="layer-name" style="color:var(--accent)">Coroplético</div>
+            <div class="layer-sub">184 reg · Municípios</div>
+          </div>
+          <div class="layer-actions">
+            <button class="layer-action-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            <button class="layer-action-btn delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg></button>
+          </div>
+        </div>
+        <div class="layer-body">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:10px;font-size:11px;color:var(--text-muted)">
+            Área: <strong style="color:var(--text)">cod_ibge</strong> · Valor: <strong style="color:var(--text)">populacao</strong>
+          </div>
+          <div style="background:var(--surface-muted);border:1px solid var(--border);border-radius:6px;padding:4px 10px;margin-bottom:10px;font-size:10px;color:var(--accent);display:flex;align-items:center;gap:4px;">
+            <span>✓</span> Municípios — GeoJSON auto
+          </div>
+          <div style="margin-bottom:8px">
+            <label style="font-size:11px;color:var(--text-subtle);font-weight:500;display:block;margin-bottom:4px">Número de faixas</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px">
+              <button style="padding:5px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);font-size:11px;font-weight:600">3 faixas</button>
+              <button style="padding:5px;border:1px solid var(--accent);border-radius:4px;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:600">5 faixas</button>
+              <button style="padding:5px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);font-size:11px;font-weight:600">7 faixas</button>
+            </div>
+          </div>
+
+          <div style="font-size:10px;color:var(--text-subtle);margin-top:12px;padding-top:8px;border-top:1px solid var(--border)">
+            ⚠️ Para trocar a paleta de cores, vá para a aba <strong style="color:var(--accent)">Estilo</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- OLD: Pontos -->
+      <div class="layer-card" style="margin-bottom:8px">
+        <div class="layer-header">
+          <svg class="layer-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <div class="layer-info">
+            <div class="layer-name">Pontos</div>
+            <div class="layer-sub">Lat / Lon</div>
+          </div>
+          <div class="layer-actions" style="opacity:0.3">
+            <button class="layer-action-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- OLD: Pontos adicionais -->
+      <div class="layer-card" style="margin-bottom:8px">
+        <div class="layer-header">
+          <svg class="layer-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <div class="layer-info">
+            <div class="layer-name">Camadas de Pontos</div>
+            <div class="layer-sub">Adicionar múltiplas</div>
+          </div>
+          <div class="layer-actions" style="opacity:0.3">
+            <button class="layer-action-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- OLD: GeoJSON -->
+      <div class="layer-card" style="margin-bottom:8px">
+        <div class="layer-header">
+          <svg class="layer-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <div class="layer-info">
+            <div class="layer-name">GeoJSON</div>
+            <div class="layer-sub">Sobreposição vetorial</div>
+          </div>
+          <div class="layer-actions" style="opacity:0.3">
+            <button class="layer-action-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Warning box showing the UX problem -->
+      <div style="background:rgba(248,81,73,0.08);border:1px solid rgba(248,81,73,0.3);border-radius:6px;padding:10px 12px;font-size:11px;color:var(--text-muted);line-height:1.5">
+        <div style="color:var(--danger);font-weight:600;margin-bottom:4px">⚠️ Problema atual</div>
+        Para configurar o coroplético você precisa:
+        <div style="margin-top:6px;padding-left:12px;border-left:2px solid var(--danger)">
+          1. Na aba <strong style="color:var(--text)">Dados</strong>: fazer upload<br>
+          2. Ainda na aba <strong style="color:var(--text)">Dados</strong>: selecionar colunas<br>
+          3. Mudar para aba <strong style="color:var(--accent)">Estilo</strong>: trocar paleta<br>
+          4. Voltar para aba <strong style="color:var(--accent)">Estilo</strong>: ajustar legenda
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  // Toggle layer expand/collapse
+  function toggleLayer(id) {
+    const card = document.getElementById(id);
+    const bodyId = id + 'Body';
+    const body = document.getElementById(bodyId);
+    if (card && body) {
+      const isExpanded = card.classList.contains('expanded');
+      card.classList.toggle('expanded');
+      body.style.display = isExpanded ? 'none' : 'block';
+    }
+  }
+
+  // Switch tabs
+  function switchNewTab(tab) {
+    const tabs = ['map', 'layers', 'visual'];
+    tabs.forEach(t => {
+      const el = document.getElementById('newTab' + t.charAt(0).toUpperCase() + t.slice(1));
+      if (el) el.style.display = t === tab ? 'block' : 'none';
+    });
+    const btns = document.querySelectorAll('#newTabBar .tab-btn');
+    btns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+  }
+
+  // Select map
+  function selectMap(el) {
+    document.querySelectorAll('.map-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // Toggle add layer menu
+  function toggleAddMenu() {
+    const menu = document.getElementById('addLayerMenu');
+    menu.classList.toggle('open');
+  }
+
+  // Simulate adding layers
+  function showStepperState() {
+    document.getElementById('addLayerMenu').classList.remove('open');
+    alert('Simulação: Entraria no estado de stepper (Mockup 3)');
+  }
+  function addPointsLayer() {
+    document.getElementById('addLayerMenu').classList.remove('open');
+    alert('Simulação: Entraria no fluxo de pontos');
+  }
+  function addGeoJsonLayer() {
+    document.getElementById('addLayerMenu').classList.remove('open');
+    alert('Simulação: Entraria no fluxo de GeoJSON');
+  }
+
+  // Advance stepper (simulate)
+  function advanceStepper() {
+    alert('Simulação: Arquivo selecionado → avançaria para Step 2 (Colunas)');
+  }
+
+  // Close menu on outside click
+  document.addEventListener('click', function(e) {
+    const menu = document.getElementById('addLayerMenu');
+    const btn = document.getElementById('addLayerBtn');
+    const container = document.getElementById('addLayerContainer');
+    if (menu && container && !container.contains(e.target)) {
+      menu.classList.remove('open');
+    }
+  });
+</script>
+
+</body>
+</html>

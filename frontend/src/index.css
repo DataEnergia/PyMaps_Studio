@@ -1,0 +1,226 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-condensed: 'Inter', system-ui, -apple-system, sans-serif;
+    --bg: #F3F4F6;
+    --bg-strong: #E5E7EB;
+    --surface: #FFFFFF;
+    --surface-strong: #F9FAFB;
+    --surface-muted: #F3F4F6;
+    --border: #E5E7EB;
+    --border-strong: #D1D5DB;
+    --text: #111827;
+    --text-muted: #4B5563;
+    --text-subtle: #6B7280;
+    --accent: #6366F1;
+    --accent-strong: #4F46E5;
+    --accent-soft: rgba(99, 102, 241, 0.12);
+    --success: #16A34A;
+    --warning: #CA8A04;
+    --danger: #DC2626;
+    --shadow: 0 1px 2px rgba(17, 24, 39, 0.05), 0 8px 24px rgba(17, 24, 39, 0.08);
+    --panel-shadow: 0 6px 28px rgba(17, 24, 39, 0.12), 0 24px 54px rgba(17, 24, 39, 0.10);
+    --gridline: rgba(17, 24, 39, 0.06);
+    --ruler-bg: rgba(17, 24, 39, 0.09);
+    --ruler-border: rgba(17, 24, 39, 0.10);
+    --ruler-text: rgba(17, 24, 39, 0.52);
+    --ruler-tick: rgba(17, 24, 39, 0.18);
+    --guide-line: rgba(99, 102, 241, 0.48);
+    --guide-line-soft: rgba(99, 102, 241, 0.36);
+  }
+
+  .theme-dark {
+    color-scheme: dark;
+    --bg: #111827;
+    --bg-strong: #0B1220;
+    --surface: #1F2937;
+    --surface-strong: #273449;
+    --surface-muted: #334155;
+    --border: #374151;
+    --border-strong: #4B5563;
+    --text: #F9FAFB;
+    --text-muted: #D1D5DB;
+    --text-subtle: #9CA3AF;
+    --accent: #818CF8;
+    --accent-strong: #6366F1;
+    --accent-soft: rgba(129, 140, 248, 0.16);
+    --success: #4ADE80;
+    --warning: #FCD34D;
+    --danger: #F87171;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.34), 0 18px 44px rgba(0, 0, 0, 0.30);
+    --panel-shadow: 0 10px 34px rgba(0, 0, 0, 0.45), 0 30px 68px rgba(0, 0, 0, 0.36);
+    --gridline: rgba(255, 255, 255, 0.06);
+    --ruler-bg: rgba(2, 6, 23, 0.45);
+    --ruler-border: rgba(255, 255, 255, 0.10);
+    --ruler-text: rgba(255, 255, 255, 0.62);
+    --ruler-tick: rgba(255, 255, 255, 0.18);
+    --guide-line: rgba(129, 140, 248, 0.58);
+    --guide-line-soft: rgba(129, 140, 248, 0.44);
+  }
+
+  * {
+    border-color: var(--border);
+  }
+  
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+    padding-right: 36px;
+  }
+
+  input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  
+  input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+  
+  input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 12px;
+  }
+}
+
+@layer components {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 12px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--text-subtle);
+  }
+}
+
+/* MapLibre overrides */
+.maplibregl-map {
+  font-family: var(--font-sans);
+}
+
+.maplibregl-ctrl-group {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  box-shadow: var(--shadow) !important;
+  backdrop-filter: blur(12px);
+}
+
+.maplibregl-ctrl-group button {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  border-bottom: 1px solid var(--border) !important;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background: var(--surface-muted) !important;
+  color: var(--text) !important;
+}
+
+.maplibregl-ctrl-group button:last-child {
+  border-bottom: 0 !important;
+}
+
+.maplibregl-ctrl-icon {
+  filter: none;
+  opacity: 0.8;
+}
+
+.theme-dark .maplibregl-ctrl-icon {
+  filter: invert(1) brightness(0.9);
+  opacity: 0.9;
+}
+
+.maplibregl-ctrl-scale {
+  background: var(--surface) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  padding: 2px 6px !important;
+  border-radius: 6px !important;
+}
+
+.maplibregl-popup-content {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.maplibregl-popup-tip {
+  border-top-color: var(--surface) !important;
+}
+
+/* ── Export mode: hide UI elements ── */
+.export-mode .hide-on-export,
+.export-capturing .hide-on-export {
+  display: none !important;
+}
+
+.export-mode .maplibregl-control-container,
+.export-capturing .maplibregl-control-container {
+  display: none !important;
+}
+
+/* Hide grid lines during export */
+.export-capturing [data-studio-board] > .pointer-events-none[style*="gridline"] {
+  opacity: 0 !important;
+}
+
+/* Hide block selection ring during export */
+.export-capturing .ring-2 {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Hide canvas info badge, resize handles, grips, color-popup during capture */
+.export-capturing [data-studio-board] .absolute[style*="bottom: 8"],
+.export-capturing [data-handle],
+.export-capturing .export-overlay,
+.export-capturing .map-color-popup {
+  display: none !important;
+}
+
+/* Allow map containers to grow beyond block bounds during hi-res export */
+.export-capturing .block-content-wrap {
+  overflow: visible !important;
+}
+
+/* Strip board chrome during capture */
+.export-capturing [data-studio-board] {
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  border: none !important;
+}

@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="theme-dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PYMAPS Studio — Mockup Visual</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --font-sans: 'Source Sans 3', 'IBM Plex Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --font-condensed: 'IBM Plex Sans Condensed', 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+    --bg: #0f1317;
+    --bg-strong: #10161c;
+    --surface: #151b22;
+    --surface-strong: #1a212b;
+    --surface-muted: #1b222c;
+    --border: #2a3340;
+    --border-strong: #394457;
+    --text: #e7ecf2;
+    --text-muted: #a9b3c1;
+    --text-subtle: #8a94a3;
+    --accent: #4c86b8;
+    --accent-strong: #3b73a3;
+    --accent-soft: rgba(76, 134, 184, 0.16);
+    --success: #4fd087;
+    --warning: #ffbe55;
+    --danger: #f87171;
+    --shadow: 0 24px 60px rgba(7, 10, 14, 0.65);
+    --panel-shadow: 0 30px 70px rgba(3, 8, 12, 0.8);
+    --gridline: rgba(233, 238, 245, 0.05);
+  }
+  .theme-light {
+    color-scheme: light;
+    --bg: #f5f6f7;
+    --bg-strong: #eef0f2;
+    --surface: #ffffff;
+    --surface-strong: #f7f8fa;
+    --surface-muted: #eff1f4;
+    --border: #d3d9e0;
+    --border-strong: #c2c9d1;
+    --text: #1e2329;
+    --text-muted: #5a6572;
+    --text-subtle: #7b8694;
+    --accent: #1f4f7a;
+    --accent-strong: #173f63;
+    --accent-soft: rgba(31, 79, 122, 0.14);
+    --success: #2f855a;
+    --warning: #9a6700;
+    --shadow: 0 20px 45px rgba(16, 24, 40, 0.12);
+    --panel-shadow: 0 25px 55px rgba(15, 23, 42, 0.14);
+    --gridline: rgba(21, 26, 33, 0.07);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; border-color:var(--border); }
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* === HEADER === */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 48px; padding: 0 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    z-index: 100; position: relative;
+  }
+  .header-left { display:flex; align-items:center; gap:12px; }
+  .header-logo { font-family: var(--font-condensed); font-size: 15px; font-weight: 600; color: var(--accent); letter-spacing: -0.3px; }
+  .header-nav { display:flex; align-items:center; gap:4px; }
+  .nav-tab {
+    padding: 5px 14px; border-radius: 6px; font-size: 13px; font-weight: 500;
+    color: var(--text-muted); cursor: pointer; transition: all 0.15s; border: none; background: none;
+  }
+  .nav-tab:hover { color: var(--text); background: var(--surface-muted); }
+  .nav-tab.active { color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+  .header-right { display:flex; align-items:center; gap:8px; }
+  .header-btn {
+    display:inline-flex; align-items:center; gap:6px; padding:5px 10px;
+    border-radius:6px; border:1px solid var(--border); background:var(--surface);
+    color:var(--text-muted); font-size:12px; cursor:pointer; transition:all 0.15s;
+  }
+  .header-btn:hover { color:var(--text); border-color:var(--border-strong); }
+
+  /* === MAIN LAYOUT === */
+  .main {
+    display:flex; height:calc(100vh - 48px); position:relative;
+  }
+
+  /* === CHAT PANEL === */
+  .chat-panel {
+    width:380px; min-width:380px; display:flex; flex-direction:column;
+    background:var(--surface); border-right:1px solid var(--border);
+    z-index:10;
+  }
+  .chat-header {
+    padding:12px 16px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .chat-header-title { font-size:13px; font-weight:600; color:var(--text); }
+  .chat-header-sub { font-size:11px; color:var(--text-subtle); }
+  .chat-file-badge {
+    display:flex; align-items:center; gap:8px;
+    margin:8px 16px; padding:8px 12px;
+    background:var(--accent-soft); border:1px solid var(--accent-soft);
+    border-radius:8px; font-size:12px;
+  }
+  .chat-file-icon { font-size:18px; }
+  .chat-file-info { flex:1; }
+  .chat-file-name { color:var(--text); font-weight:500; }
+  .chat-file-meta { color:var(--text-subtle); font-size:11px; }
+  .chat-file-close { color:var(--text-muted); cursor:pointer; font-size:14px; line-height:1; }
+  .chat-file-close:hover { color:var(--danger); }
+
+  .chat-messages {
+    flex:1; overflow-y:auto; padding:16px;
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .chat-msg { display:flex; gap:10px; max-width:100%; }
+  .chat-msg.user { flex-direction:row-reverse; }
+  .chat-avatar {
+    width:32px; height:32px; border-radius:8px; display:flex; align-items:center;
+    justify-content:center; font-size:14px; flex-shrink:0;
+  }
+  .chat-avatar.ai { background:var(--accent-soft); color:var(--accent); }
+  .chat-avatar.user { background:var(--surface-strong); color:var(--text-muted); }
+  .chat-bubble {
+    padding:10px 14px; border-radius:12px; font-size:13px; line-height:1.55;
+    max-width:85%; word-wrap:break-word;
+  }
+  .chat-bubble.ai { background:var(--surface-strong); color:var(--text); border-bottom-left-radius:4px; }
+  .chat-bubble.user { background:var(--accent-soft); color:var(--accent-strong); border-bottom-right-radius:4px; }
+  .chat-bubble code {
+    background:rgba(0,0,0,0.2); padding:2px 6px; border-radius:4px; font-size:11px;
+    font-family: 'IBM Plex Sans', monospace;
+  }
+
+  .chat-input-area { padding:12px 16px; border-top:1px solid var(--border); }
+  .chat-input-row { display:flex; gap:8px; }
+  .chat-input {
+    flex:1; padding:9px 14px; border-radius:10px; border:1px solid var(--border);
+    background:var(--surface-strong); color:var(--text); font-size:13px;
+    font-family:var(--font-sans); resize:none; outline:none;
+    transition: border-color 0.15s;
+  }
+  .chat-input:focus { border-color:var(--accent); }
+  .chat-input::placeholder { color:var(--text-subtle); }
+  .chat-send-btn {
+    padding:8px 14px; border-radius:10px; border:none; background:var(--accent);
+    color:#fff; font-size:13px; font-weight:500; cursor:pointer;
+    transition: background 0.15s; display:flex; align-items:center; gap:6px;
+  }
+  .chat-send-btn:hover { background:var(--accent-strong); }
+  .chat-actions { display:flex; gap:6px; margin-top:8px; }
+  .chat-action-btn {
+    padding:5px 10px; border-radius:6px; border:1px solid var(--border);
+    background:var(--surface-strong); color:var(--text-muted); font-size:11px;
+    cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.15s;
+  }
+  .chat-action-btn:hover { color:var(--text); border-color:var(--border-strong); }
+
+  /* === CANVAS === */
+  .canvas-area {
+    flex:1; display:flex; flex-direction:column; overflow:hidden;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(125,140,160,0.14), transparent 55%),
+      linear-gradient(135deg, rgba(45,55,72,0.12), transparent 60%),
+      linear-gradient(transparent 96%, var(--gridline) 96%),
+      linear-gradient(90deg, transparent 96%, var(--gridline) 96%);
+    background-size: 100% 100%, 100% 100%, 24px 24px, 24px 24px;
+  }
+  .canvas-toolbar {
+    display:flex; align-items:center; gap:6px;
+    padding:8px 16px; background:var(--surface); border-bottom:1px solid var(--border);
+  }
+  .canvas-toolbar-group { display:flex; align-items:center; gap:4px; }
+  .canvas-toolbar-sep { width:1px; height:20px; background:var(--border); margin:0 6px; }
+  .canvas-tb-btn {
+    display:inline-flex; align-items:center; gap:5px; padding:5px 10px;
+    border-radius:6px; border:1px solid var(--border); background:var(--surface-strong);
+    color:var(--text-muted); font-size:12px; cursor:pointer; transition:all 0.15s;
+  }
+  .canvas-tb-btn:hover { color:var(--text); border-color:var(--border-strong); }
+  .canvas-tb-btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .canvas-tb-btn.primary:hover { background:var(--accent-strong); }
+  .canvas-zoom { font-size:11px; color:var(--text-subtle); min-width:44px; text-align:center; }
+
+  .canvas-viewport {
+    flex:1; display:flex; align-items:center; justify-content:center; padding:32px;
+    overflow:auto;
+  }
+  .canvas-board {
+    position:relative; width:1100px; height:780px; flex-shrink:0;
+    background:var(--surface); border-radius:16px;
+    box-shadow: var(--panel-shadow);
+    border: 1px solid var(--border);
+    overflow:hidden;
+  }
+  .canvas-board-label {
+    position:absolute; bottom:8px; right:12px;
+    font-size:10px; color:var(--text-subtle); font-family:var(--font-condensed);
+    letter-spacing:0.3px; z-index:20;
+  }
+
+  /* === BLOCKS === */
+  .block {
+    position:absolute; border-radius:8px; overflow:hidden;
+    border:1px solid transparent; transition:border-color 0.15s, box-shadow 0.15s;
+    cursor:grab;
+  }
+  .block:hover { border-color:var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+  .block-map {
+    background: #1a2330;
+  }
+  .block-map-inner {
+    width:100%; height:100%; position:relative;
+    background: linear-gradient(160deg, #1a2a3a 0%, #0d1b2a 40%, #1b2838 70%, #0f1c2c 100%);
+  }
+  .block-map-grid-h, .block-map-grid-v {
+    position:absolute; background:rgba(255,255,255,0.04);
+  }
+  .block-map-label {
+    position:absolute; font-size:9px; color:rgba(255,255,255,0.5);
+    font-family:var(--font-condensed); letter-spacing:0.5px;
+  }
+  .block-map-shape {
+    position:absolute; border:1.5px solid rgba(255,255,255,0.4);
+    border-radius: 15% 20% 30% 10% / 10% 20% 15% 25%;
+  }
+  .block-map-marker {
+    position:absolute; width:10px; height:10px; border-radius:50%;
+    background:var(--danger); box-shadow: 0 0 0 3px rgba(248,113,113,0.25);
+  }
+  .block-map-marker::after {
+    content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:4px; height:4px; border-radius:50%; background:#fff;
+  }
+
+  .block-card {
+    display:flex; flex-direction:column; justify-content:center; padding:16px 20px;
+    background:linear-gradient(135deg, #0d2818 0%, #132a1e 100%);
+    border-left:3px solid var(--success);
+  }
+  .block-card-icon { font-size:20px; margin-bottom:8px; }
+  .block-card-title { font-size:11px; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:0.8px; font-weight:500; }
+  .block-card-value { font-size:36px; font-weight:600; color:#fff; line-height:1.1; margin:4px 0; font-family:var(--font-condensed); }
+  .block-card-subtitle { font-size:12px; color:var(--success); font-weight:500; }
+
+  .block-chart {
+    background: var(--surface-strong); padding:16px;
+    display:flex; flex-direction:column;
+  }
+  .block-chart-title { font-size:12px; font-weight:600; color:var(--text); margin-bottom:12px; }
+  .block-chart-bars { flex:1; display:flex; align-items:flex-end; gap:12px; padding:0 4px; }
+  .block-chart-bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .block-chart-bar {
+    width:100%; border-radius:6px 6px 0 0; min-height:4px;
+    transition: height 0.3s; position:relative;
+  }
+  .block-chart-bar-val {
+    font-size:10px; font-weight:600; color:var(--text-muted);
+    position:absolute; top:-16px; left:50%; transform:translateX(-50%);
+  }
+  .block-chart-bar-lbl { font-size:10px; color:var(--text-subtle); text-align:center; }
+
+  .block-text {
+    background: var(--surface-strong); padding:20px 24px;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .block-text h2 { font-size:15px; font-weight:600; color:var(--text); font-family:var(--font-condensed); }
+  .block-text p { font-size:12px; line-height:1.7; color:var(--text-muted); }
+
+  .block-divider {
+    background: transparent;
+  }
+
+  /* Connector lines (SVG overlay) */
+  .connectors-layer {
+    position:absolute; inset:0; pointer-events:none; z-index:15;
+  }
+  .connector-path {
+    fill:none; stroke-dasharray: 6 3;
+    animation: dash-flow 1.5s linear infinite;
+  }
+  @keyframes dash-flow {
+    from { stroke-dashoffset: 0; }
+    to { stroke-dashoffset: -18; }
+  }
+  .connector-dot {
+    animation: pulse-dot 2s infinite;
+  }
+  .connector-label {
+    font-size:9px; font-family:var(--font-condensed);
+    fill:var(--text-subtle); letter-spacing:0.3px;
+  }
+
+  /* Timeline block */
+  .block-timeline {
+    background: var(--surface-strong); padding:16px 20px;
+    display:flex; flex-direction:column; gap:4px;
+    overflow:hidden;
+  }
+  .block-timeline-title {
+    font-size:11px; font-weight:600; color:var(--text);
+    text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px;
+  }
+  .block-timeline-track {
+    flex:1; display:flex; align-items:flex-start; position:relative;
+    padding:12px 0;
+  }
+  .block-timeline-line {
+    position:absolute; top:28px; left:14px; right:14px; height:2px;
+    background:linear-gradient(to right, var(--accent-soft), var(--accent), var(--accent-soft));
+    border-radius:1px;
+  }
+  .block-timeline-node {
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;
+    position:relative; z-index:1;
+  }
+  .block-timeline-dot {
+    width:14px; height:14px; border-radius:50%;
+    background:var(--accent); border:3px solid var(--surface-strong);
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  .block-timeline-node-date {
+    font-size:10px; color:var(--text-subtle); font-weight:500;
+  }
+  .block-timeline-node-label {
+    font-size:10px; color:var(--text); font-weight:600;
+    text-align:center; line-height:1.3;
+  }
+  .block-timeline-node-value {
+    font-size:11px; color:var(--accent); font-weight:600;
+    font-family:var(--font-condensed);
+  }
+
+  /* Mini-map block */
+  .block-minimap {
+    background: #15202b;
+    border-radius:8px; overflow:hidden;
+  }
+  .block-minimap-inner {
+    width:100%; height:100%; position:relative;
+    background: radial-gradient(ellipse at 30% 40%, rgba(76,134,184,0.12), transparent 60%),
+                linear-gradient(180deg, #1a2a3a 0%, #0d1b2a 100%);
+  }
+  .block-minimap-label {
+    position:absolute; font-size:8px; color:rgba(255,255,255,0.45);
+    font-family:var(--font-condensed); letter-spacing:0.4px;
+  }
+  .block-minimap-spot {
+    position:absolute; width:6px; height:6px; border-radius:50%;
+    background:var(--accent); box-shadow: 0 0 6px var(--accent);
+  }
+  .block-minimap-compass {
+    position:absolute; bottom:6px; left:6px;
+    width:24px; height:24px; border-radius:50%;
+    border:1px solid rgba(255,255,255,0.2);
+    display:flex; align-items:center; justify-content:center;
+    font-size:9px; color:rgba(255,255,255,0.4);
+  }
+
+  /* === ANIMATIONS === */
+  @keyframes pulse-dot {
+    0%,100% { opacity:1; }
+    50% { opacity:0.4; }
+  }
+  .typing-indicator { display:flex; gap:4px; padding:8px 0; }
+  .typing-indicator span {
+    width:6px; height:6px; border-radius:50%; background:var(--text-subtle);
+    animation: pulse-dot 1.4s infinite;
+  }
+  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+  /* === SCROLLBAR === */
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:3px; }
+
+  /* === TOOLTIP === */
+  .tooltip {
+    position:absolute; top:-32px; left:50%; transform:translateX(-50%);
+    background:var(--surface-strong); color:var(--text); font-size:11px;
+    padding:3px 8px; border-radius:4px; border:1px solid var(--border);
+    white-space:nowrap; pointer-events:none; opacity:0; transition:opacity 0.15s;
+  }
+  .block:hover .tooltip { opacity:1; }
+</style>
+</head>
+<body>
+
+<!-- ====== HEADER ====== -->
+<header class="header">
+  <div class="header-left">
+    <span class="header-logo">◈ PYMAPS</span>
+    <nav class="header-nav">
+      <button class="nav-tab">🏠 Home</button>
+      <button class="nav-tab active">🎨 Studio</button>
+    </nav>
+  </div>
+  <div class="header-right">
+    <button class="header-btn" onclick="toggleTheme()" title="Alternar tema">
+      <span id="theme-icon">☀️</span> <span id="theme-label">Claro</span>
+    </button>
+    <span style="font-size:12px;color:var(--text-subtle);padding:0 4px;">v3.1-dev</span>
+  </div>
+</header>
+
+<!-- ====== MAIN LAYOUT ====== -->
+<main class="main">
+
+  <!-- CHAT PANEL -->
+  <aside class="chat-panel">
+    <div class="chat-header">
+      <div>
+        <div class="chat-header-title">💬 Studio Assistant</div>
+        <div class="chat-header-sub">Descreva o infográfico desejado</div>
+      </div>
+      <span style="font-size:10px;color:var(--success);display:flex;align-items:center;gap:4px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--success);display:inline-block;"></span>
+        Conectado
+      </span>
+    </div>
+
+    <!-- Arquivo carregado -->
+    <div class="chat-file-badge">
+      <span class="chat-file-icon">📊</span>
+      <div class="chat-file-info">
+        <div class="chat-file-name">dados_vendas_sp.xlsx</div>
+        <div class="chat-file-meta">156 linhas · 8 colunas · 24 KB</div>
+      </div>
+      <span class="chat-file-close">✕</span>
+    </div>
+
+    <!-- Mensagens -->
+    <div class="chat-messages">
+      <!-- Mensagem AI -->
+      <div class="chat-msg">
+        <div class="chat-avatar ai">🤖</div>
+        <div>
+          <div class="chat-bubble ai">
+            Arquivo carregado! <strong>156 registros</strong> com colunas: <code>Cidade</code>, <code>Latitude</code>, <code>Longitude</code>, <code>Vendas</code>, <code>Categoria</code>, <code>Ano</code>.<br><br>
+            O que você gostaria de visualizar?
+          </div>
+        </div>
+      </div>
+
+      <!-- Mensagem User -->
+      <div class="chat-msg user">
+        <div class="chat-avatar user">👤</div>
+        <div class="chat-bubble user">
+          Cria um infográfico no estilo relatório executivo. Quero o mapa de SP com os marcadores de vendas, cards com total e média, e um gráfico de barras com vendas por categoria.
+        </div>
+      </div>
+
+      <!-- Mensagem AI (gerando) -->
+      <div class="chat-msg">
+        <div class="chat-avatar ai">🤖</div>
+        <div>
+          <div class="chat-bubble ai">
+            Entendi! Vou gerar um layout de relatório executivo com:
+            <br><br>✅ Mapa de SP com 12 marcadores e <strong>conectores</strong> para os cards
+            <br>✅ Card: Total de Vendas
+            <br>✅ Card: Média por Cidade + Top Categoria
+            <br>✅ Timeline: Evolução Trimestral
+            <br>✅ Minimapa: Posição no Brasil
+            <br>✅ Gráfico de barras: Vendas por Categoria
+            <br>✅ Bloco de texto: Resumo analítico
+            <br><br>
+            <em style="color:var(--text-subtle);">Gerando infográfico...</em>
+          </div>
+        </div>
+      </div>
+
+      <!-- Typing indicator -->
+      <div class="chat-msg">
+        <div class="chat-avatar ai">🤖</div>
+        <div class="typing-indicator">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div class="chat-input-area">
+      <div class="chat-input-row">
+        <input class="chat-input" placeholder="Descreva o infográfico ou ajuste algo..." value="Aumenta o mapa e adiciona um subtítulo com o período 2024-2025" />
+        <button class="chat-send-btn">▶ Enviar</button>
+      </div>
+      <div class="chat-actions">
+        <button class="chat-action-btn">📎 Anexar referência</button>
+        <button class="chat-action-btn">📋 Templates</button>
+        <button class="chat-action-btn">🗑️ Limpar</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CANVAS -->
+  <section class="canvas-area">
+    <!-- Toolbar -->
+    <div class="canvas-toolbar">
+      <div class="canvas-toolbar-group">
+        <button class="canvas-tb-btn">↩ Desfazer</button>
+        <button class="canvas-tb-btn">↪ Refazer</button>
+      </div>
+      <div class="canvas-toolbar-sep"></div>
+      <div class="canvas-toolbar-group">
+        <button class="canvas-tb-btn">−</button>
+        <span class="canvas-zoom">100%</span>
+        <button class="canvas-tb-btn">+</button>
+      </div>
+      <div class="canvas-toolbar-sep"></div>
+      <div class="canvas-toolbar-group">
+        <button class="canvas-tb-btn">⊞ Grid</button>
+        <button class="canvas-tb-btn">📐 Guias</button>
+      </div>
+      <div style="flex:1;"></div>
+      <div class="canvas-toolbar-group">
+        <button class="canvas-tb-btn">📋 Copiar</button>
+        <button class="canvas-tb-btn primary">⬇ Exportar</button>
+      </div>
+    </div>
+
+    <!-- Viewport -->
+    <div class="canvas-viewport">
+      <div class="canvas-board">
+
+        <!-- Bloco: MAPA -->
+        <div class="block block-map" style="left:16px; top:16px; width:580px; height:440px;">
+          <div class="block-map-inner">
+            <!-- Grid lines horizontais -->
+            <div class="block-map-grid-h" style="top:20%; left:0; right:0; height:1px;"></div>
+            <div class="block-map-grid-h" style="top:40%; left:0; right:0; height:1px;"></div>
+            <div class="block-map-grid-h" style="top:60%; left:0; right:0; height:1px;"></div>
+            <div class="block-map-grid-h" style="top:80%; left:0; right:0; height:1px;"></div>
+            <!-- Grid lines verticais -->
+            <div class="block-map-grid-v" style="left:20%; top:0; bottom:0; width:1px;"></div>
+            <div class="block-map-grid-v" style="left:40%; top:0; bottom:0; width:1px;"></div>
+            <div class="block-map-grid-v" style="left:60%; top:0; bottom:0; width:1px;"></div>
+            <div class="block-map-grid-v" style="left:80%; top:0; bottom:0; width:1px;"></div>
+
+            <!-- Shape simulando SP -->
+            <div class="block-map-shape" style="left:25%; top:15%; width:50%; height:70%; background:rgba(76,134,184,0.08);"></div>
+
+            <!-- Marcadores -->
+            <div class="block-map-marker" style="left:32%; top:25%;"></div>
+            <div class="block-map-marker" style="left:48%; top:32%;"></div>
+            <div class="block-map-marker" style="left:38%; top:45%; background:var(--success); box-shadow: 0 0 0 3px rgba(79,208,135,0.25);"></div>
+            <div class="block-map-marker" style="left:55%; top:38%;"></div>
+            <div class="block-map-marker" style="left:30%; top:58%; background:var(--warning); box-shadow: 0 0 0 3px rgba(255,190,85,0.25);"></div>
+            <div class="block-map-marker" style="left:52%; top:55%;"></div>
+            <div class="block-map-marker" style="left:44%; top:68%;"></div>
+            <div class="block-map-marker" style="left:60%; top:62%; background:var(--success); box-shadow: 0 0 0 3px rgba(79,208,135,0.25);"></div>
+            <div class="block-map-marker" style="left:35%; top:42%;"></div>
+            <div class="block-map-marker" style="left:68%; top:48%;"></div>
+            <div class="block-map-marker" style="left:42%; top:78%; background:var(--warning); box-shadow: 0 0 0 3px rgba(255,190,85,0.25);"></div>
+            <div class="block-map-marker" style="left:58%; top:72%;"></div>
+
+            <!-- Labels -->
+            <div class="block-map-label" style="top:8px;left:12px;">São Paulo</div>
+            <div class="block-map-label" style="bottom:8px;left:12px;">IBGE · MapLibre</div>
+          </div>
+          <div class="tooltip">🗺️ Mapa — São Paulo (arraste para mover)</div>
+        </div>
+
+        <!-- Bloco: CARD (Total) -->
+        <div class="block block-card" style="left:612px; top:16px; width:470px; height:120px;">
+          <span class="block-card-icon">💰</span>
+          <span class="block-card-title">Total de Vendas</span>
+          <span class="block-card-value">R$ 12.4M</span>
+          <span class="block-card-subtitle">▲ +18.3% vs ano anterior</span>
+          <div class="tooltip">📊 Card — Total de Vendas (clique duplo para editar)</div>
+        </div>
+
+        <!-- CONNECTORES: SVG overlay ligando mapa → cards -->
+        <svg class="connectors-layer" viewBox="0 0 1100 780" style="width:1100px; height:780px;">
+          <!-- Linha do marcador Topo-Esq para Card Total -->
+          <path d="M596,150 C620,140 630,100 640,80" class="connector-path" stroke="#4c86b8" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+          <!-- Linha do marcador Centro para Card Média -->
+          <path d="M580,280 C600,270 620,240 628,220" class="connector-path" stroke="#f87171" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+          <!-- Linha do marcador Baixo para Chart -->
+          <path d="M560,460 C580,440 610,400 620,370" class="connector-path" stroke="#ffbe55" stroke-width="1.5" marker-end="url(#arrow-yellow)"/>
+          <!-- Curva decorativa entre Minimap e Timeline -->
+          <path d="M270,434 C270,450 280,460 300,460" stroke="#394457" stroke-width="1" fill="none" stroke-dasharray="3 4"/>
+          <!-- Linha entre Chart e Texto -->
+          <path d="M640,560 C630,580 620,610 608,620" stroke="#4c86b8" stroke-width="1" fill="none" opacity="0.4"/>
+          
+          <!-- Arrow markers -->
+          <defs>
+            <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#4c86b8"/>
+            </marker>
+            <marker id="arrow-red" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#f87171"/>
+            </marker>
+            <marker id="arrow-yellow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#ffbe55"/>
+            </marker>
+          </defs>
+          
+          <!-- Labels das conexões -->
+          <text x="620" y="116" class="connector-label">Detalhe</text>
+          <text x="610" y="250" class="connector-label">Média</text>
+          <text x="590" y="414" class="connector-label">Ranking</text>
+        </svg>
+
+        <!-- Bloco: TIMELINE -->
+        <div class="block block-timeline" style="left:612px; top:144px; width:470px; height:124px;">
+          <div class="block-timeline-title">⏱️ Evolução Trimestral</div>
+          <div class="block-timeline-track">
+            <div class="block-timeline-line"></div>
+            <div class="block-timeline-node">
+              <div class="block-timeline-node-value">R$2.1M</div>
+              <div class="block-timeline-dot"></div>
+              <div class="block-timeline-node-date">Q1 2024</div>
+              <div class="block-timeline-node-label">Início</div>
+            </div>
+            <div class="block-timeline-node">
+              <div class="block-timeline-node-value">R$2.8M</div>
+              <div class="block-timeline-dot" style="background:var(--success); box-shadow:0 0 0 2px var(--success);"></div>
+              <div class="block-timeline-node-date">Q2 2024</div>
+              <div class="block-timeline-node-label">Crescimento</div>
+            </div>
+            <div class="block-timeline-node">
+              <div class="block-timeline-node-value">R$3.4M</div>
+              <div class="block-timeline-dot" style="background:var(--success); box-shadow:0 0 0 2px var(--success);"></div>
+              <div class="block-timeline-node-date">Q3 2024</div>
+              <div class="block-timeline-node-label">Aceleração</div>
+            </div>
+            <div class="block-timeline-node">
+              <div class="block-timeline-node-value">R$4.1M</div>
+              <div class="block-timeline-dot" style="background:var(--accent); box-shadow:0 0 0 2px var(--accent), 0 0 8px var(--accent);"></div>
+              <div class="block-timeline-node-date">Q4 2024</div>
+              <div class="block-timeline-node-label">Pico</div>
+            </div>
+            <div class="block-timeline-node">
+              <div class="block-timeline-node-value" style="color:var(--warning);">Projeção</div>
+              <div class="block-timeline-dot" style="background:transparent; border:2px dashed var(--warning); box-shadow:none;"></div>
+              <div class="block-timeline-node-date">Q1 2025</div>
+              <div class="block-timeline-node-label">Meta</div>
+            </div>
+          </div>
+          <div class="tooltip">⏱️ Timeline — Evolução Trimestral</div>
+        </div>
+
+        <!-- Bloco: MINIMAPA (Brasil inset) -->
+        <div class="block block-minimap" style="left:16px; top:468px; width:250px; height:148px;">
+          <div class="block-minimap-inner">
+            <div class="block-minimap-shape" style="position:absolute; left:20%; top:18%; width:58%; height:64%;
+              background:rgba(76,134,184,0.1); border:1px solid rgba(76,134,184,0.25);
+              border-radius: 12% 20% 28% 8% / 8% 18% 22% 14%;
+            "></div>
+            <div class="block-minimap-spot" style="left:38%; top:52%; width:8px; height:8px; background:var(--warning); box-shadow: 0 0 10px var(--warning);"></div>
+            <div class="block-minimap-label" style="top:8px;left:10px;">Brasil · Contexto</div>
+            <div class="block-minimap-label" style="bottom:12px;right:10px;">SP: R$12.4M (42%)</div>
+            <div class="block-minimap-compass">N</div>
+          </div>
+          <div class="tooltip">🗺️ Minimapa — Posição no Brasil</div>
+        </div>
+
+        <!-- Bloco: CARD (Média) - ajustado -->
+        <div class="block block-card" style="left:612px; top:282px; width:228px; height:130px;">
+          <span class="block-card-icon">📈</span>
+          <span class="block-card-title">Média/Cidade</span>
+          <span class="block-card-value" style="font-size:28px;">R$ 794K</span>
+          <span class="block-card-subtitle">12 cidades</span>
+          <div class="tooltip">📊 Card — Média por Cidade</div>
+        </div>
+
+        <!-- Bloco: CARD (Top) - ajustado -->
+        <div class="block block-card" style="left:854px; top:282px; width:228px; height:130px;">
+          <span class="block-card-icon">🏆</span>
+          <span class="block-card-title">Top Categoria</span>
+          <span class="block-card-value" style="font-size:28px;">Tecnologia</span>
+          <span class="block-card-subtitle">42% do total</span>
+          <div class="tooltip">📊 Card — Top Categoria</div>
+        </div>
+
+        <!-- Bloco: CHART -->
+        <div class="block block-chart" style="left:612px; top:428px; width:470px; height:188px;">
+          <div class="block-chart-title">📊 Vendas por Categoria</div>
+          <div class="block-chart-bars">
+            <div class="block-chart-bar-col">
+              <div class="block-chart-bar" style="height:85%; background:linear-gradient(to top,#4c86b8,#6ba3d4);"><span class="block-chart-bar-val">R$5.2M</span></div>
+              <div class="block-chart-bar-lbl">Tecnologia</div>
+            </div>
+            <div class="block-chart-bar-col">
+              <div class="block-chart-bar" style="height:62%; background:linear-gradient(to top,#3b73a3,#5b91c2);"><span class="block-chart-bar-val">R$3.8M</span></div>
+              <div class="block-chart-bar-lbl">Serviços</div>
+            </div>
+            <div class="block-chart-bar-col">
+              <div class="block-chart-bar" style="height:38%; background:linear-gradient(to top,#2d5f85,#4a7eab);"><span class="block-chart-bar-val">R$2.3M</span></div>
+              <div class="block-chart-bar-lbl">Indústria</div>
+            </div>
+            <div class="block-chart-bar-col">
+              <div class="block-chart-bar" style="height:18%; background:linear-gradient(to top,#1f4562,#38658a);"><span class="block-chart-bar-val">R$1.1M</span></div>
+              <div class="block-chart-bar-lbl">Comércio</div>
+            </div>
+          </div>
+          <div class="tooltip">📊 Gráfico — Vendas por Categoria</div>
+        </div>
+
+        <!-- Bloco: TEXTO (Rodapé) -->
+        <div class="block block-text" style="left:278px; top:468px; width:318px; height:148px;">
+          <h2>📝 Resumo Executivo</h2>
+          <p>
+            São Paulo registrou <strong>R$ 12.4M</strong> em vendas no período 2024-2025.
+            A categoria <strong>Tecnologia</strong> lidera com 42% do total.
+            Crescimento de 18.3% em relação ao período anterior.
+          </p>
+          <div class="tooltip">📝 Bloco de Texto — Resumo</div>
+        </div>
+
+        <div class="canvas-board-label">1100×780 px · PYMAPS Studio</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  function toggleTheme() {
+    const html = document.documentElement;
+    const icon = document.getElementById('theme-icon');
+    const label = document.getElementById('theme-label');
+    if (html.classList.contains('theme-dark')) {
+      html.classList.remove('theme-dark');
+      html.classList.add('theme-light');
+      icon.textContent = '🌙';
+      label.textContent = 'Escuro';
+    } else {
+      html.classList.remove('theme-light');
+      html.classList.add('theme-dark');
+      icon.textContent = '☀️';
+      label.textContent = 'Claro';
+    }
+  }
+</script>
+</body>
+</html>
