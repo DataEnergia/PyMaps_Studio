@@ -4,6 +4,9 @@ PyMaps Studio e uma plataforma web para criacao rapida de mapas tematicos e info
 
 O objetivo do projeto e reduzir a complexidade do geoprocessamento para tarefas de comunicacao visual: carregar dados tabulares, vincular automaticamente com malhas geograficas e gerar composicoes visuais prontas para exportacao.
 
+<img width="1271" height="699" alt="image" src="https://github.com/user-attachments/assets/a26b32b7-0570-40c5-b4a7-d3b9d31ec134" />
+
+
 ## Proposta do projeto
 
 O PyMaps foi concebido para pessoas que precisam construir mapas e graficos de forma simples e rapida, sem depender de fluxo tecnico avancado de SIG.
